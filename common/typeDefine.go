@@ -1,26 +1,15 @@
 package common
 
-// Account 交易账号
-type Account struct {
-	Name        string       `json:"name"`
-	Note        string       `json:"note"`                  // 备注
-	InitFund    float64      `json:"InitFund"`              // 初始总资产
-	TargetStock string       `json:"targetSock"`            // 目标股票代码
-	LastPrize   *KLineNode   `json:"-"`                     // 最新股票状况
-	lastDeal    *KLineNode   `json:"-"`                     // 上次交易时的股票状况
-	Balance     BalanceInfo  `json:"BalanceInfo"`           // 账户余额信息
-	TradStat    TradInfo     `json:"TradInfo"`              // 交易过程统计数据
-	TradLog     []TradRecord `json:"tradLogList,omitempty"` // 交易记录
-	ActionLog   []Action     `json:"actionLog"`             // 操作日志
-	BuyEntrust  []Entrust    `json:"-"`                     // 买入委托单
-	SellEntrust []Entrust    `json:"-"`                     // 卖出委托单
-}
-
 // BalanceInfo 账号资产信息
 type BalanceInfo struct {
-	Balance  float64 `json:"balance"`  // 可用现金
-	CostRMB  float64 `json:"costRmb"`  // 持仓成本 (元)
-	StockVol int     `json:"StockVol"` // 持有股票份额
+	BalanceRMB float64 `json:"balanceRmb"` // 可用现金
+	CostRMB    float64 `json:"costRmb"`    // 持仓成本 (元)
+	StockVol   int     `json:"StockVol"`   // 持有股票份额
+}
+
+type Setting struct {
+	SellLock bool `json:"sellLock"` // 值为true时, 不执行卖出操作
+	BuyLock  bool `json:"buyLock"`  // 值为true时, 不执行买入操作
 }
 
 // TradInfo 账户交易数据概述
@@ -37,16 +26,16 @@ type TradInfo struct {
 
 // TradRecord 交易记录
 type TradRecord struct {
-	Timestamp int64        `json:"timestamp"` // 时间
-	Mode      StrategyMode `json:"mode"`      // 买或卖
-	Prize     float64      `json:"prize"`     // 成交价
-	Vol       int          `json:"vol"`       // 成交量
+	Timestamp int64   `json:"timestamp"` // 时间
+	Mode      OpMode  `json:"mode"`      // 买或卖
+	Prize     float64 `json:"prize"`     // 成交价
+	Vol       int     `json:"vol"`       // 成交量
 }
 
 // Action 账号动作日志
 type Action struct {
+	Mode      ActionType `json:"mode"`
 	Timestamp int64      `json:"timestamp"`
-	action    ActionType `json:"action"`
 	Desc      string     `json:"desc"` // 具体描述
 }
 

@@ -1,6 +1,6 @@
 package dao
 
-import "github.com/BlackCarDriver/test/common"
+import "github.com/BlackCarDriver/StockMaster/common"
 
 // ========================== http 接口响应结构 =======================
 
