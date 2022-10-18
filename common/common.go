@@ -78,3 +78,8 @@ func RisePrizeByFlow(before float64, flow float64) (after float64) {
 	after = before * ((100.0 + flow) / 100.0)
 	return after
 }
+
+// TimeFormat 格式化时间
+func TimeFormat(timestamp int64) string {
+	return time.Unix(timestamp, 0).Format("2006-01-02 15:04")
+}

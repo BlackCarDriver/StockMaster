@@ -19,6 +19,7 @@ type GridStrategy struct {
 	MaxCost      float64 `json:"maxCost"`      // 最大持有成本 (0-不限制)
 	MinRetain    int     `json:"minRetain"`    // 最低保留份额 (卖出时保证最少剩余多少份额)
 	Vol          int     `json:"vol"`          // 每次委托买入或卖出的数量
+	ExpireDay    int64   `json:"ExpireDay"`    // 委托条件单的有效天数
 }
 
 func (g *GridStrategy) Execute(account *common.Account, moment common.KLineNode) (err error) {
@@ -30,6 +31,11 @@ func (g *GridStrategy) Execute(account *common.Account, moment common.KLineNode)
 	if g.EndTime > 0 && g.EndTime < moment.Timestamp {
 		log.Debug("%s, 已过执行时间", moment.TimeDesc)
 		return
+	}
+
+	timeNow, timeExpire := moment.Timestamp, int64(0)
+	if g.ExpireDay > 0 {
+		timeExpire = timeNow + 24*3600*g.ExpireDay
 	}
 
 	// 建仓
@@ -54,8 +60,8 @@ func (g *GridStrategy) Execute(account *common.Account, moment common.KLineNode)
 		}
 		nextSellPrize := common.RisePrizeByFlow(dealPrize, g.FlowStepUp)
 		nextBuyPrize := common.RisePrizeByFlow(dealPrize, g.FlowStepDown)
-		account.CreateEntrust(common.ModeShell, nextSellPrize, g.Vol, moment.Timestamp, 0)
-		account.CreateEntrust(common.ModeBuy, nextBuyPrize, g.Vol, moment.Timestamp, 0)
+		account.CreateEntrust(common.ModeShell, nextSellPrize, g.Vol, timeNow, timeExpire)
+		account.CreateEntrust(common.ModeBuy, nextBuyPrize, g.Vol, timeNow, timeExpire)
 		return
 	}
 
@@ -76,8 +82,8 @@ func (g *GridStrategy) Execute(account *common.Account, moment common.KLineNode)
 	if mode == common.ModeBuy || mode == common.ModeShell {
 		nextSellPrize := common.RisePrizeByFlow(record.Price, g.FlowStepUp)
 		nextBuyPrize := common.RisePrizeByFlow(record.Price, g.FlowStepDown)
-		account.CreateEntrust(common.ModeShell, nextSellPrize, g.Vol, moment.Timestamp, 0)
-		account.CreateEntrust(common.ModeBuy, nextBuyPrize, g.Vol, moment.Timestamp, 0)
+		account.CreateEntrust(common.ModeShell, nextSellPrize, g.Vol, timeNow, timeExpire)
+		account.CreateEntrust(common.ModeBuy, nextBuyPrize, g.Vol, timeNow, timeExpire)
 	}
 
 	return

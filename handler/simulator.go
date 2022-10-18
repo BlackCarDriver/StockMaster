@@ -6,7 +6,6 @@ import (
 	"github.com/BlackCarDriver/StockMaster/common"
 	"github.com/BlackCarDriver/StockMaster/dao"
 	"github.com/BlackCarDriver/StockMaster/strategy"
-	"time"
 )
 
 // Simulate 根据指定账号状态和给出的k线图数据, 按照指定交易策略遍历指数数据, 得到最终的账号状态
@@ -33,7 +32,7 @@ func Simulate(before common.Account, stockData dao.KLineData, strategy strategy.
 
 // PrintRunResult 在控制台打印模拟结果
 func PrintRunResult(account *common.Account, strategy strategy.Strategy, data dao.KLineData) {
-	if account == nil {
+	if account == nil || account.LastPrize == nil {
 		log.Warning("unexpect nil account")
 		return
 	}
@@ -62,7 +61,7 @@ func PrintRunResult(account *common.Account, strategy strategy.Strategy, data da
 	color.HiBlack("名称: %s  代码: %s", data.Name, data.Code)
 	color.HiBlack("数据时间范围:  %s ~ %s", data.From, data.To)
 	color.HiBlack("节点长度:  %d", len(data.KLines))
-	color.HiBlack("更新时间: %s", formatTime(data.UpdateTime))
+	color.HiBlack("更新时间: %s", common.TimeFormat(data.UpdateTime))
 
 	color.Blue("============ 策略描述 =============")
 	color.HiBlack(strategy.GetDesc())
@@ -74,12 +73,12 @@ func PrintRunResult(account *common.Account, strategy strategy.Strategy, data da
 
 	color.Blue("============ 操作日志 =============")
 	for _, item := range account.ActionLog {
-		color.HiBlack("%s, %s, %s", formatTime(item.Timestamp), item.Mode, item.Desc)
+		color.HiBlack("%s, %s, %s", common.TimeFormat(item.Timestamp), item.Mode, item.Desc)
 	}
 
 	color.Blue("============ 交易记录 =============")
 	for i, item := range account.TradLog {
-		color.HiBlack("i=%d, %s, %s, 价格=%.2f   份额=%d ", i+1, formatTime(item.Timestamp), item.Mode, item.Prize, item.Vol)
+		color.HiBlack("i=%d, %s, %s, 价格=%.2f   份额=%d ", i+1, common.TimeFormat(item.Timestamp), item.Mode, item.Prize, item.Vol)
 	}
 
 	color.Blue("============ 委托列表 =============")
@@ -102,8 +101,4 @@ func PrintRunResult(account *common.Account, strategy strategy.Strategy, data da
 	color.HiBlack("持有市值=%.2f", canSell)
 	color.HiBlack("持仓盈亏=%.2f  (%.2f%%)", canSell-balance.CostRMB, common.CountRiseRange(balance.CostRMB, canSell))
 	color.HiBlack("总盈亏=%.2f  (%.2f%%)", currentValue-account.InitFundRMB, common.CountRiseRange(account.InitFundRMB, currentValue))
-}
-
-func formatTime(timestamp int64) string {
-	return time.Unix(timestamp, 0).Format("2006-01-02 15:04")
 }

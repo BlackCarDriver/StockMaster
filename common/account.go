@@ -86,16 +86,20 @@ func (a *Account) CreateEntrust(mode OpMode, prize float64, vol int, startTime i
 		Vol:      vol,
 		DealTime: 0,
 	}
+	expireDesc := ""
+	if deadTime > 0 {
+		expireDesc = fmt.Sprintf(" (%s截至)", TimeFormat(deadTime))
+	}
 	if mode == ModeBuy {
 		a.BuyEntrust = append(a.BuyEntrust, item)
-		a.recordAction(startTime, ActionEntrust, fmt.Sprintf("创建条件单, 价格下破%.2f时买入%d份", prize, vol))
+		a.recordAction(startTime, ActionEntrust, fmt.Sprintf("创建条件单, 价格下破 %.2f 时买入 %d 份 %s", prize, vol, expireDesc))
 		sort.Slice(a.BuyEntrust, func(i, j int) bool {
 			return a.BuyEntrust[i].Price > a.BuyEntrust[j].Price
 		})
 	}
 	if mode == ModeShell {
 		a.SellEntrust = append(a.SellEntrust, item)
-		a.recordAction(startTime, ActionEntrust, fmt.Sprintf("创建条件单, 价格上穿%.2f时卖出%d份", prize, vol))
+		a.recordAction(startTime, ActionEntrust, fmt.Sprintf("创建条件单, 价格上穿 %.2f 时卖出 %d 份 %s", prize, vol, expireDesc))
 		sort.Slice(a.SellEntrust, func(i, j int) bool {
 			return a.SellEntrust[i].Price < a.SellEntrust[j].Price
 		})
@@ -106,10 +110,14 @@ func (a *Account) CreateEntrust(mode OpMode, prize float64, vol int, startTime i
 func (a *Account) ExecuteEntrust(moment KLineNode) (mode OpMode, record *Entrust) {
 	// 尝试执行达到条件的卖出委托
 	for i, entrust := range a.SellEntrust {
+		if entrust.DeadTime > 0 && entrust.DeadTime < moment.Timestamp { // 已过期
+			a.SellEntrust[i].DealTime = entrust.DeadTime
+			continue
+		}
 		if a.Setting.SellLock {
 			return
 		}
-		if entrust.DeadTime > moment.Timestamp || entrust.DealTime > 0 {
+		if entrust.DealTime > 0 {
 			continue
 		}
 		if moment.Top < entrust.Price { // 价格未上穿卖出价
@@ -126,10 +134,14 @@ func (a *Account) ExecuteEntrust(moment KLineNode) (mode OpMode, record *Entrust
 	}
 	// 尝试执行达到条件的买入委托
 	for i, entrust := range a.BuyEntrust {
+		if entrust.DeadTime > 0 && entrust.DeadTime < moment.Timestamp { // 已过期
+			a.BuyEntrust[i].DealTime = entrust.DeadTime
+			continue
+		}
 		if a.Setting.BuyLock {
 			return
 		}
-		if entrust.DeadTime > moment.Timestamp || entrust.DealTime > 0 {
+		if entrust.DealTime > 0 {
 			continue
 		}
 		if moment.Bottom > entrust.Price { // 未跌破到指定买入价

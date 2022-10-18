@@ -43,7 +43,7 @@ type Action struct {
 type Entrust struct {
 	StarTime int64   `json:"StarTime"` // 委托时间
 	DeadTime int64   `json:"deadTime"` // 失效时间 (0=一直有效)
-	DealTime int64   `json:"dealTime"` // 成交时间 (0=未成交)
+	DealTime int64   `json:"dealTime"` // 成交时间或失效时间 (0=未成交且仍有效)
 	Price    float64 `json:"price"`    // 委托价
 	Vol      int     `json:"vol"`      // 交易份数
 }
